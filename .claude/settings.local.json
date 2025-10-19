@@ -6,7 +6,8 @@
       "Bash(npm run dev)",
       "Bash(git add -A)",
       "Bash(winget install stripe.stripe-cli)",
-      "Bash(curl -L https://github.com/stripe/stripe-cli/releases/latest/download/stripe_1.22.0_windows_x86_64.zip -o stripe-cli.zip)"
+      "Bash(curl -L https://github.com/stripe/stripe-cli/releases/latest/download/stripe_1.22.0_windows_x86_64.zip -o stripe-cli.zip)",
+      "Bash(npm install recharts)"
     ],
     "deny": [],
     "ask": []

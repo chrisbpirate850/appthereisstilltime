@@ -13,6 +13,8 @@ import { getUserSubscription } from '@/lib/firebase/firestore';
 import { createReflection } from '@/lib/firebase/firestore';
 import { addMilestoneReached } from '@/lib/firebase/firestore';
 import { getUserId } from '@/lib/utils/userId';
+import { useRouter } from 'next/navigation';
+import { hasAnalyticsAccess } from '@/lib/subscription/tiers';
 
 // Components
 import { SessionPresets } from '@/components/Timer/SessionPresets';
@@ -27,6 +29,7 @@ import { TrialBanner } from '@/components/Auth/TrialBanner';
 
 export default function Home() {
   const userId = getUserId();
+  const router = useRouter();
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -267,6 +270,30 @@ export default function Home() {
           {/* Settings (unlocked after first session) */}
           {canShowSettings && (
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Dashboard Button (Focus+ tier) */}
+              {!isAnonymous && hasAnalyticsAccess(subscription) && (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="glass rounded-full p-2 sm:p-3 transition-smooth hover:bg-twilight-600/30"
+                  aria-label="Analytics Dashboard"
+                  title="Dashboard"
+                >
+                  <svg
+                    className="h-4 w-4 sm:h-5 sm:w-5 text-twilight-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </button>
+              )}
+
               {/* Hourglass Selector Button (Phase 2) */}
               {featureFlags.phase2_symbolicMapping && (
                 <button
