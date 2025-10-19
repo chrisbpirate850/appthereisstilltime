@@ -3,12 +3,24 @@
 import { UserSubscription, PremiumFeatures, SubscriptionTier } from '@/types';
 
 /**
+ * Check if we're in development mode (bypasses subscription checks)
+ */
+function isDevMode(): boolean {
+  return process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+}
+
+/**
  * Check if user has access to a specific feature based on their subscription tier
  */
 export function hasFeatureAccess(
   subscription: UserSubscription | null,
   feature: keyof PremiumFeatures
 ): boolean {
+  // Development mode: grant access to all features
+  if (isDevMode()) {
+    return true;
+  }
+
   // Free tier has no premium features
   if (!subscription || subscription.tier === 'free') {
     return false;
@@ -88,6 +100,11 @@ export function getImageCredits(subscription: UserSubscription | null): {
   monthly: number;
   unlimited: boolean;
 } {
+  // Development mode: unlimited credits
+  if (isDevMode()) {
+    return { monthly: 0, unlimited: true };
+  }
+
   if (!subscription) {
     return { monthly: 0, unlimited: false };
   }
