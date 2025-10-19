@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   linkWithCredential,
   EmailAuthProvider,
+  sendPasswordResetEmail,
   type User
 } from 'firebase/auth';
 
@@ -37,6 +38,7 @@ export function SignupModal({
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const getReasonMessage = () => {
     switch (reason) {
@@ -51,9 +53,37 @@ export function SignupModal({
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setResetEmailSent(true);
+      setError(null);
+    } catch (err: any) {
+      console.error('❌ Password reset error:', err);
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
+      } else {
+        setError('Failed to send reset email. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setResetEmailSent(false);
     setLoading(true);
 
     try {
@@ -151,9 +181,21 @@ export function SignupModal({
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm text-twilight-300 mb-1.5">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="password" className="block text-sm text-twilight-300">
+                Password
+              </label>
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={loading}
+                  className="text-xs text-twilight-400 hover:text-twilight-300 transition-smooth disabled:opacity-50"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <input
               id="password"
               type="password"
@@ -166,6 +208,15 @@ export function SignupModal({
               disabled={loading}
             />
           </div>
+
+          {/* Reset Email Sent Success Message */}
+          {resetEmailSent && (
+            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p className="text-sm text-green-400">
+                Password reset email sent! Check your inbox.
+              </p>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (

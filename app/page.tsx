@@ -26,6 +26,7 @@ import { MilestoneToast } from '@/components/Progression/MilestoneToast';
 import { ReflectionModal } from '@/components/Progression/ReflectionModal';
 import { SignupModal } from '@/components/Auth/SignupModal';
 import { TrialBanner } from '@/components/Auth/TrialBanner';
+import { HamburgerMenu } from '@/components/Navigation/HamburgerMenu';
 
 export default function Home() {
   const userId = getUserId();
@@ -47,6 +48,7 @@ export default function Home() {
   } | null>(null);
   const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState(null);
+  const [previousSessionCount, setPreviousSessionCount] = useState<number>(0);
 
   // Trial limits hook (now with Firestore sync)
   const {
@@ -106,6 +108,27 @@ export default function Home() {
     loadSubscription();
   }, [userId, currentUser]);
 
+  // Check for milestones when session count increases
+  useEffect(() => {
+    if (!userStats) return;
+
+    // Only check if session count increased
+    if (userStats.totalSessions > previousSessionCount && previousSessionCount > 0) {
+      const newMilestones = checkNewMilestones(userStats);
+
+      if (newMilestones.length > 0) {
+        // Show first milestone
+        setMilestoneToast({ message: newMilestones[0].message });
+
+        // Save milestone
+        addMilestoneReached(userId, newMilestones[0].id);
+      }
+    }
+
+    // Update previous count
+    setPreviousSessionCount(userStats.totalSessions);
+  }, [userStats?.totalSessions, checkNewMilestones, userId, previousSessionCount]);
+
   // Timer hook
   const onTimerComplete = async () => {
     // Play gentle sound (if enabled)
@@ -117,9 +140,13 @@ export default function Home() {
       });
     }
 
-    // Record session
+    // Record session (this will update userStats via the hook)
     const durationMinutes = timerState.duration / 60;
     const sessionId = `session_${Date.now()}`;
+
+    // Save old stats before recording
+    const oldStats = userStats;
+
     await recordSession(
       durationMinutes,
       selectedHourglass.id,
@@ -128,27 +155,7 @@ export default function Home() {
 
     setCompletedSessionId(sessionId);
 
-    // Check for new milestones
-    if (userStats) {
-      const newStats = {
-        ...userStats,
-        totalSessions: userStats.totalSessions + 1,
-        totalMinutes: userStats.totalMinutes + durationMinutes,
-        totalHours: Math.floor(
-          (userStats.totalMinutes + durationMinutes) / 60
-        ),
-      };
-
-      const newMilestones = checkNewMilestones(newStats);
-
-      if (newMilestones.length > 0) {
-        // Show first milestone
-        setMilestoneToast({ message: newMilestones[0].message });
-
-        // Save milestone
-        await addMilestoneReached(userId, newMilestones[0].id);
-      }
-    }
+    // Note: Milestone checking happens in useEffect below when userStats updates
 
     // Show reflection modal (if enabled)
     if (preferences?.enableJournaling && featureFlags.phase4_journaling) {
@@ -194,6 +201,12 @@ export default function Home() {
   // Handle successful signup
   const handleSignupSuccess = (user: User) => {
     console.log('✅ Signup successful:', user.uid);
+    console.log('✅ User email:', user.email);
+    console.log('✅ Is anonymous:', user.isAnonymous);
+
+    // Force update the current user state
+    setCurrentUser(user);
+    setIsAnonymous(user.isAnonymous);
 
     // Clear trial state
     clearTrialState();
@@ -267,134 +280,17 @@ export default function Home() {
             )}
           </div>
 
-          {/* Settings (unlocked after first session) */}
-          {canShowSettings && (
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Dashboard Button (Focus+ tier) */}
-              {!isAnonymous && hasAnalyticsAccess(subscription) && (
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="glass rounded-full p-2 sm:p-3 transition-smooth hover:bg-twilight-600/30"
-                  aria-label="Analytics Dashboard"
-                  title="Dashboard"
-                >
-                  <svg
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-twilight-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </button>
-              )}
-
-              {/* Study Rooms Button (Student+ tier) */}
-              {!isAnonymous && hasStudyRoomsAccess(subscription) && (
-                <button
-                  onClick={() => router.push('/rooms')}
-                  className="glass rounded-full p-2 sm:p-3 transition-smooth hover:bg-twilight-600/30"
-                  aria-label="Study Rooms"
-                  title="Study Rooms"
-                >
-                  <svg
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-twilight-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                </button>
-              )}
-
-              {/* Hourglass Selector Button (Phase 2) */}
-              {featureFlags.phase2_symbolicMapping && (
-                <button
-                  onClick={() => setShowHourglassSelector(true)}
-                  className="glass rounded-full p-2 sm:p-3 transition-smooth hover:bg-twilight-600/30"
-                  aria-label="Change hourglass theme"
-                  title="Change hourglass"
-                >
-                  <svg
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-twilight-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </button>
-              )}
-
-              {/* Custom AI Hourglass Button (Phase 3) */}
-              {featureFlags.phase3_customAI && isPremium && (
-                <button
-                  onClick={() => setShowCustomHourglass(true)}
-                  className="glass rounded-full p-2 sm:p-3 transition-smooth hover:bg-gold-600/30"
-                  aria-label="Create custom hourglass"
-                  title="AI Custom Hourglass"
-                >
-                  <svg
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-gold-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                    />
-                  </svg>
-                </button>
-              )}
-
-              {/* Settings Button */}
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="glass rounded-full p-2 sm:p-3 transition-smooth hover:bg-twilight-600/30"
-                aria-label="Settings"
-                title="Settings"
-              >
-                <svg
-                  className="h-4 w-4 sm:h-5 sm:w-5 text-twilight-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
+          {/* Hamburger Menu (always visible) */}
+          <HamburgerMenu
+            currentUser={currentUser}
+            isAnonymous={isAnonymous}
+            subscription={subscription}
+            sessionsRemainingToday={sessionsRemainingToday}
+            onSignupClick={() => {
+              setSignupReason('voluntary');
+              setShowSignup(true);
+            }}
+          />
         </div>
 
         {/* Timer or Session Select */}
