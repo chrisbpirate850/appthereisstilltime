@@ -255,7 +255,7 @@ export default function StudyRoomsPage() {
 
       {/* Content */}
       <div className="container mx-auto px-4 pb-12">
-        {isInRoom ? (
+        {isInRoom && currentRoom ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Active Users */}
             <ActiveUsers roomId={currentRoom.roomId} currentUserId={currentUser.uid} />

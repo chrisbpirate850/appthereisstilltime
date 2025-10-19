@@ -31,8 +31,8 @@ export default function PricingPage() {
         // Load subscription to determine current tier
         const subscription = await getUserSubscription(user.uid);
         if (subscription) {
-          // Determine tier from subscription metadata
-          setCurrentTier(subscription.metadata?.tier || 'free');
+          // Determine tier from subscription
+          setCurrentTier(subscription.tier || 'free');
         }
       }
     });

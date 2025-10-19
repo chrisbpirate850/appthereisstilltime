@@ -38,6 +38,10 @@ export function useSessionTracking(): UseSessionTrackingReturn {
           totalSessions: 0,
           totalMinutes: 0,
           totalHours: 0,
+          totalMinutesVerified: 0,
+          last30dMinutesVerified: 0,
+          currentStreak: 0,
+          longestStreak: 0,
           milestonesReached: [],
         });
       } finally {

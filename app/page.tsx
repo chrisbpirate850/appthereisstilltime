@@ -336,6 +336,7 @@ export default function Home() {
           onSubmit={handleCustomHourglassSubmit}
           onClose={() => setShowCustomHourglass(false)}
           isGenerating={false}
+          creditsRemaining={isPremium ? 'unlimited' : 0}
         />
       )}
 
