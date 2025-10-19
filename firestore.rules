@@ -20,6 +20,12 @@ service cloud.firestore {
       match /preferences/{document=**} {
         allow read, write: if isOwner(userId);
       }
+
+      // Trial state subcollection (Phase 2)
+      // Anonymous users can read/write their own trial state
+      match /trial/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Sessions collection
