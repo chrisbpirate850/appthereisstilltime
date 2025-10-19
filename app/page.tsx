@@ -272,6 +272,9 @@ export default function Home() {
             <h1 className="text-lg sm:text-2xl font-light tracking-wide text-white">
               There Is Still Time
             </h1>
+            <p className="text-xs sm:text-sm text-twilight-400 italic">
+              Get Locked In and Achieve
+            </p>
             {userStats && (
               <div className="mt-1 text-xs sm:text-sm text-twilight-300">
                 {userStats.totalSessions} sessions · {userStats.totalHours}h

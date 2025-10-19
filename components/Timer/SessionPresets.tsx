@@ -24,7 +24,10 @@ export function SessionPresets({ onSelectDuration }: SessionPresetsProps) {
     <div className="flex flex-col items-center space-y-6 sm:space-y-8 px-4">
       {/* Heading */}
       <div className="text-center">
-        <h2 className="mb-2 text-2xl sm:text-3xl font-light tracking-wide text-white">
+        <h1 className="mb-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">
+          Get Locked In
+        </h1>
+        <h2 className="mb-2 text-xl sm:text-2xl font-light tracking-wide text-white">
           Select your focus session
         </h2>
         <p className="text-xs sm:text-sm text-twilight-300">
