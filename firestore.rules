@@ -116,6 +116,35 @@ service cloud.firestore {
       }
     }
 
+    // Study Rooms (Phase 4)
+    match /rooms/{roomId} {
+      // Anyone authenticated can read rooms
+      allow read: if request.auth != null;
+
+      // Only server/Cloud Functions can write rooms
+      allow write: if false;
+    }
+
+    // Room Presence (real-time tracking)
+    match /presence/{userId} {
+      // Users can read all presence records in rooms
+      allow read: if request.auth != null;
+
+      // Users can only write their own presence
+      allow create: if request.auth != null && userId == request.auth.uid;
+      allow update: if request.auth != null && userId == request.auth.uid;
+      allow delete: if request.auth != null && userId == request.auth.uid;
+    }
+
+    // Leaderboards (read-only for users)
+    match /leaderboards/{leaderboardId} {
+      // Anyone authenticated can read leaderboards
+      allow read: if request.auth != null;
+
+      // Only server/Cloud Functions can write leaderboards
+      allow write: if false;
+    }
+
     // Default deny all
     match /{document=**} {
       allow read, write: if false;
