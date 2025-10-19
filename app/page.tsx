@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { auth } from '@/lib/firebase/config';
 import { useTimer } from '@/lib/hooks/useTimer';
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking';
 import { useHourglassLibrary } from '@/lib/hooks/useHourglassLibrary';
 import { usePreferences } from '@/lib/hooks/usePreferences';
+import { useTrialLimits } from '@/lib/hooks/useTrialLimits';
 import { getFeatureFlags, isPremiumUser } from '@/lib/utils/featureFlags';
 import { getUserSubscription } from '@/lib/firebase/firestore';
 import { createReflection } from '@/lib/firebase/firestore';
@@ -19,20 +22,37 @@ import { HourglassSelector } from '@/components/Personalization/HourglassSelecto
 import { CustomHourglassModal } from '@/components/Personalization/CustomHourglassModal';
 import { MilestoneToast } from '@/components/Progression/MilestoneToast';
 import { ReflectionModal } from '@/components/Progression/ReflectionModal';
+import { SignupModal } from '@/components/Auth/SignupModal';
+import { TrialBanner } from '@/components/Auth/TrialBanner';
 
 export default function Home() {
   const userId = getUserId();
 
-  // State management
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState(true);
+
+  // UI state management
   const [showHourglassSelector, setShowHourglassSelector] = useState(false);
   const [showCustomHourglass, setShowCustomHourglass] = useState(false);
   const [showReflection, setShowReflection] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const [signupReason, setSignupReason] = useState<'trial_expired' | 'trial_limit' | 'feature_locked' | 'voluntary'>('voluntary');
   const [milestoneToast, setMilestoneToast] = useState<{
     message: string;
   } | null>(null);
   const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState(null);
+
+  // Trial limits hook
+  const {
+    shouldPromptSignup,
+    sessionsRemainingToday,
+    isTrialExpired,
+    recordTrialSession,
+    clearTrialState,
+  } = useTrialLimits();
 
   // Custom hooks
   const { userStats, recordSession, checkNewMilestones } = useSessionTracking();
@@ -52,14 +72,35 @@ export default function Home() {
 
   const isPremium = isPremiumUser(subscription);
 
-  // Load subscription
+  // Listen to auth state
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsAnonymous(user?.isAnonymous ?? true);
+
+      console.log('🔐 Auth state changed:', {
+        uid: user?.uid,
+        isAnonymous: user?.isAnonymous,
+        email: user?.email,
+      });
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Load subscription (for registered users only)
+  useEffect(() => {
+    if (!currentUser || currentUser.isAnonymous) {
+      setSubscription(null);
+      return;
+    }
+
     async function loadSubscription() {
       const sub = await getUserSubscription(userId);
       setSubscription(sub as any);
     }
     loadSubscription();
-  }, [userId]);
+  }, [userId, currentUser]);
 
   // Timer hook
   const onTimerComplete = async () => {
@@ -122,7 +163,45 @@ export default function Home() {
 
   // Handlers
   const handleStartSession = (durationMinutes: number) => {
+    // Check trial limits for anonymous users
+    if (isAnonymous && currentUser) {
+      // Check if trial has expired
+      if (isTrialExpired) {
+        setSignupReason('trial_expired');
+        setShowSignup(true);
+        return;
+      }
+
+      // Check daily session limit
+      if (sessionsRemainingToday === 0) {
+        setSignupReason('trial_limit');
+        setShowSignup(true);
+        return;
+      }
+
+      // Record trial session
+      recordTrialSession();
+      console.log('⏱️ Trial session started. Remaining today:', sessionsRemainingToday - 1);
+    }
+
+    // Start the timer
     startTimer(durationMinutes);
+  };
+
+  // Handle successful signup
+  const handleSignupSuccess = (user: User) => {
+    console.log('✅ Signup successful:', user.uid);
+
+    // Clear trial state
+    clearTrialState();
+
+    // Close modal
+    setShowSignup(false);
+
+    // Show welcome toast
+    setMilestoneToast({
+      message: 'Welcome! You now have unlimited sessions.',
+    });
   };
 
   const handleReflectionSubmit = async (
@@ -327,6 +406,24 @@ export default function Home() {
         <MilestoneToast
           message={milestoneToast.message}
           onClose={() => setMilestoneToast(null)}
+        />
+      )}
+
+      {/* Trial Banner (for anonymous users only, hidden during active session) */}
+      {isAnonymous && !timerState.isActive && (
+        <TrialBanner onSignupClick={() => {
+          setSignupReason('voluntary');
+          setShowSignup(true);
+        }} />
+      )}
+
+      {/* Signup Modal */}
+      {showSignup && (
+        <SignupModal
+          onClose={() => setShowSignup(false)}
+          onSuccess={handleSignupSuccess}
+          currentAnonymousUser={currentUser}
+          reason={signupReason}
         />
       )}
 
