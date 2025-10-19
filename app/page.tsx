@@ -45,14 +45,15 @@ export default function Home() {
   const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState(null);
 
-  // Trial limits hook
+  // Trial limits hook (now with Firestore sync)
   const {
     shouldPromptSignup,
     sessionsRemainingToday,
     isTrialExpired,
     recordTrialSession,
     clearTrialState,
-  } = useTrialLimits();
+    isLoading: trialLoading,
+  } = useTrialLimits(currentUser?.uid);
 
   // Custom hooks
   const { userStats, recordSession, checkNewMilestones } = useSessionTracking();
@@ -181,7 +182,6 @@ export default function Home() {
 
       // Record trial session
       recordTrialSession();
-      console.log('⏱️ Trial session started. Remaining today:', sessionsRemainingToday - 1);
     }
 
     // Start the timer

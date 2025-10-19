@@ -2,6 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { TrialState } from '@/types';
+import {
+  getTrialState,
+  recordTrialSessionFirestore,
+  validateTrialSession,
+  clearTrialStateFirestore
+} from '@/lib/firebase/firestore';
 
 const TRIAL_STORAGE_KEY = 'thereisstilltime_trial';
 const TRIAL_DURATION_DAYS = 7;
@@ -10,32 +16,69 @@ const DAILY_SESSION_LIMIT = 2;
 /**
  * Hook to track and enforce trial limits for anonymous (non-signed-in) users
  *
+ * Phase 2: Now syncs with Firestore for server-side enforcement
+ *
  * Trial Rules:
  * - 2 sessions per day
  * - 7 day trial period from first use
  * - Resets daily at midnight local time
  * - Prompts signup after limit reached
+ * - Server-side validation prevents localStorage bypass
  */
-export function useTrialLimits() {
+export function useTrialLimits(userId?: string) {
   const [trialState, setTrialState] = useState<TrialState | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load trial state from localStorage on mount
+  // Load trial state from Firestore (with localStorage fallback)
   useEffect(() => {
-    const stored = localStorage.getItem(TRIAL_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as TrialState;
-        setTrialState(parsed);
-      } catch (error) {
-        console.error('Failed to parse trial state:', error);
-        // Initialize new trial state if parsing fails
-        initializeTrialState();
+    async function loadTrialState() {
+      if (!userId) {
+        setIsLoading(false);
+        return;
       }
-    } else {
-      // No trial state yet - will be initialized on first session
-      setTrialState(null);
+
+      try {
+        // Try to load from Firestore first
+        const firestoreState = await getTrialState(userId);
+
+        if (firestoreState) {
+          setTrialState(firestoreState);
+          // Sync to localStorage for offline access
+          localStorage.setItem(TRIAL_STORAGE_KEY, JSON.stringify(firestoreState));
+        } else {
+          // Fallback to localStorage (for backward compatibility)
+          const stored = localStorage.getItem(TRIAL_STORAGE_KEY);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored) as TrialState;
+              setTrialState(parsed);
+            } catch (error) {
+              console.error('Failed to parse trial state:', error);
+              setTrialState(null);
+            }
+          } else {
+            setTrialState(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading trial state:', error);
+        // Fallback to localStorage
+        const stored = localStorage.getItem(TRIAL_STORAGE_KEY);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as TrialState;
+            setTrialState(parsed);
+          } catch (e) {
+            console.error('Failed to parse trial state:', e);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, []);
+
+    loadTrialState();
+  }, [userId]);
 
   // Initialize trial state for first-time users
   const initializeTrialState = useCallback(() => {
@@ -98,39 +141,64 @@ export function useTrialLimits() {
   }, [trialState]);
 
   // Record a session (call this when a session starts)
-  const recordTrialSession = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
+  const recordTrialSession = useCallback(async () => {
+    if (!userId) {
+      console.error('Cannot record trial session without userId');
+      return;
+    }
 
-    setTrialState((prev) => {
-      const current = prev || {
-        firstUsed: Date.now(),
-        sessionsToday: 0,
-        lastSessionDate: today,
-        totalTrialSessions: 0,
-        trialExpired: false,
-      };
+    try {
+      // Record in Firestore (server-side)
+      const updatedState = await recordTrialSessionFirestore(userId);
 
-      // If it's a new day, reset today's counter
-      const isNewDay = current.lastSessionDate !== today;
+      if (updatedState) {
+        setTrialState(updatedState);
+        // Sync to localStorage for offline access
+        localStorage.setItem(TRIAL_STORAGE_KEY, JSON.stringify(updatedState));
+      }
+    } catch (error) {
+      console.error('Error recording trial session:', error);
+      // Fallback to localStorage only
+      const today = new Date().toISOString().split('T')[0];
 
-      const updated: TrialState = {
-        ...current,
-        sessionsToday: isNewDay ? 1 : current.sessionsToday + 1,
-        lastSessionDate: today,
-        totalTrialSessions: current.totalTrialSessions + 1,
-        trialExpired: isTrialExpired,
-      };
+      setTrialState((prev) => {
+        const current = prev || {
+          firstUsed: Date.now(),
+          sessionsToday: 0,
+          lastSessionDate: today,
+          totalTrialSessions: 0,
+          trialExpired: false,
+        };
 
-      localStorage.setItem(TRIAL_STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, [isTrialExpired]);
+        const isNewDay = current.lastSessionDate !== today;
+
+        const updated: TrialState = {
+          ...current,
+          sessionsToday: isNewDay ? 1 : current.sessionsToday + 1,
+          lastSessionDate: today,
+          totalTrialSessions: current.totalTrialSessions + 1,
+          trialExpired: isTrialExpired,
+        };
+
+        localStorage.setItem(TRIAL_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    }
+  }, [userId, isTrialExpired]);
 
   // Clear trial state (call this when user signs up)
-  const clearTrialState = useCallback(() => {
+  const clearTrialState = useCallback(async () => {
+    if (userId) {
+      try {
+        await clearTrialStateFirestore(userId);
+      } catch (error) {
+        console.error('Error clearing trial state from Firestore:', error);
+      }
+    }
+
     localStorage.removeItem(TRIAL_STORAGE_KEY);
     setTrialState(null);
-  }, []);
+  }, [userId]);
 
   // Reset trial (admin/debug only)
   const resetTrial = useCallback(() => {
@@ -143,6 +211,7 @@ export function useTrialLimits() {
     trialState,
     isTrialActive: trialState !== null,
     isTrialExpired,
+    isLoading,
 
     // Limits
     sessionsRemainingToday,

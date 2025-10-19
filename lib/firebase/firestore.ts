@@ -21,6 +21,7 @@ import {
   Reflection,
   UserSubscription,
   CustomHourglassRequest,
+  TrialState,
 } from '@/types';
 
 // ============ Collections ============
@@ -350,4 +351,174 @@ export async function getUserCustomHourglass(
   }
 
   return null;
+}
+
+// ============ Trial State (Phase 2) ============
+const TRIAL_DURATION_DAYS = 7;
+const DAILY_SESSION_LIMIT = 2;
+
+export async function getTrialState(userId: string): Promise<TrialState | null> {
+  try {
+    const trialRef = doc(db, COLLECTIONS.USERS, userId, 'trial', 'state');
+    const trialSnap = await getDoc(trialRef);
+
+    if (trialSnap.exists()) {
+      const data = trialSnap.data() as TrialState;
+      console.log('📊 Loaded trial state from Firestore:', data);
+      return data;
+    }
+
+    console.log('📊 No trial state found for user:', userId);
+    return null;
+  } catch (error) {
+    console.error('❌ Error loading trial state:', error);
+    return null;
+  }
+}
+
+export async function initializeTrialState(userId: string): Promise<TrialState> {
+  const now = Date.now();
+  const today = new Date().toISOString().split('T')[0];
+
+  const newState: TrialState = {
+    firstUsed: now,
+    sessionsToday: 0,
+    lastSessionDate: today,
+    totalTrialSessions: 0,
+    trialExpired: false,
+  };
+
+  try {
+    const trialRef = doc(db, COLLECTIONS.USERS, userId, 'trial', 'state');
+    await setDoc(trialRef, {
+      ...newState,
+      createdAt: Timestamp.now(),
+    });
+    console.log('✅ Trial state initialized in Firestore');
+  } catch (error) {
+    console.error('❌ Error initializing trial state:', error);
+  }
+
+  return newState;
+}
+
+export async function recordTrialSessionFirestore(userId: string): Promise<TrialState | null> {
+  try {
+    const trialRef = doc(db, COLLECTIONS.USERS, userId, 'trial', 'state');
+    const trialSnap = await getDoc(trialRef);
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!trialSnap.exists()) {
+      // Initialize trial state if it doesn't exist
+      const newState = await initializeTrialState(userId);
+
+      // Record first session
+      await updateDoc(trialRef, {
+        sessionsToday: 1,
+        totalTrialSessions: 1,
+        lastSessionDate: today,
+        updatedAt: Timestamp.now(),
+      });
+
+      return {
+        ...newState,
+        sessionsToday: 1,
+        totalTrialSessions: 1,
+      };
+    }
+
+    const currentState = trialSnap.data() as TrialState;
+    const isNewDay = currentState.lastSessionDate !== today;
+
+    // Update trial state
+    const updatedState: Partial<TrialState> = {
+      sessionsToday: isNewDay ? 1 : (currentState.sessionsToday || 0) + 1,
+      lastSessionDate: today,
+      totalTrialSessions: (currentState.totalTrialSessions || 0) + 1,
+    };
+
+    await updateDoc(trialRef, {
+      ...updatedState,
+      updatedAt: Timestamp.now(),
+    });
+
+    console.log('✅ Trial session recorded in Firestore');
+    return {
+      ...currentState,
+      ...updatedState,
+    };
+  } catch (error) {
+    console.error('❌ Error recording trial session:', error);
+    return null;
+  }
+}
+
+export async function validateTrialSession(userId: string): Promise<{
+  allowed: boolean;
+  reason?: 'trial_expired' | 'daily_limit';
+  sessionsRemaining?: number;
+  daysRemaining?: number;
+}> {
+  try {
+    const trialState = await getTrialState(userId);
+
+    // No trial state = first session, allow it
+    if (!trialState) {
+      return {
+        allowed: true,
+        sessionsRemaining: DAILY_SESSION_LIMIT - 1,
+        daysRemaining: TRIAL_DURATION_DAYS,
+      };
+    }
+
+    // Check if trial period has expired (7 days)
+    const daysSinceFirst = Math.floor(
+      (Date.now() - trialState.firstUsed) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSinceFirst >= TRIAL_DURATION_DAYS) {
+      return {
+        allowed: false,
+        reason: 'trial_expired',
+        daysRemaining: 0,
+      };
+    }
+
+    // Check daily session limit
+    const today = new Date().toISOString().split('T')[0];
+    const isNewDay = trialState.lastSessionDate !== today;
+    const sessionsToday = isNewDay ? 0 : trialState.sessionsToday;
+
+    if (sessionsToday >= DAILY_SESSION_LIMIT) {
+      return {
+        allowed: false,
+        reason: 'daily_limit',
+        sessionsRemaining: 0,
+        daysRemaining: TRIAL_DURATION_DAYS - daysSinceFirst,
+      };
+    }
+
+    return {
+      allowed: true,
+      sessionsRemaining: DAILY_SESSION_LIMIT - sessionsToday - 1,
+      daysRemaining: TRIAL_DURATION_DAYS - daysSinceFirst,
+    };
+  } catch (error) {
+    console.error('❌ Error validating trial session:', error);
+    // On error, allow the session (fail open)
+    return { allowed: true };
+  }
+}
+
+export async function clearTrialStateFirestore(userId: string): Promise<void> {
+  try {
+    const trialRef = doc(db, COLLECTIONS.USERS, userId, 'trial', 'state');
+    await updateDoc(trialRef, {
+      trialExpired: true,
+      clearedAt: Timestamp.now(),
+    });
+    console.log('✅ Trial state cleared (user signed up)');
+  } catch (error) {
+    console.error('❌ Error clearing trial state:', error);
+  }
 }
