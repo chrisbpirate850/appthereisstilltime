@@ -1,0 +1,31 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Public hourglass library videos (read-only)
+    match /hourglasses/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Only admins via console
+    }
+
+    // User-specific custom hourglass videos
+    match /users/{userId}/custom_hourglass.mp4 {
+      // Users can read their own custom videos
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+
+    // Thumbnails
+    match /thumbnails/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

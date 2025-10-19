@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Allow read/write to own user document
+      allow read, write: if isOwner(userId);
+
+      // User preferences subcollection
+      match /preferences/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Sessions collection
+    match /sessions/{sessionId} {
+      // Allow users to create their own sessions
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      // Allow users to read their own sessions
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // No updates or deletes (sessions are immutable)
+      allow update, delete: if false;
+    }
+
+    // Reflections collection
+    match /reflections/{reflectionId} {
+      // Allow users to create their own reflections
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      // Allow users to read their own reflections
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Allow users to update/delete their own reflections
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Custom hourglass requests
+    match /customHourglasses/{requestId} {
+      // Allow users to create their own requests
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      // Allow users to read their own requests
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Cloud Functions can update (status, videoUrl, etc.)
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // No deletes
+      allow delete: if false;
+    }
+
+    // Subscriptions (managed by Cloud Functions/Stripe)
+    match /subscriptions/{userId} {
+      // Users can read their own subscription
+      allow read: if isOwner(userId);
+
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
