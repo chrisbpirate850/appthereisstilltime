@@ -315,12 +315,20 @@ export default function Home() {
 
         {/* Footer */}
         <div className="absolute bottom-4 sm:bottom-6 text-center px-4">
-          <p className="text-xs sm:text-sm text-twilight-400">
-            There is still time to{' '}
-            <span className="text-twilight-200">
-              {selectedHourglass.promptText}
+          <button
+            onClick={() => setShowHourglassSelector(true)}
+            className="group flex items-center gap-2 glass rounded-full px-4 py-2 transition-smooth hover:bg-twilight-600/30"
+          >
+            <span className="text-xs sm:text-sm text-twilight-400">
+              There is still time to{' '}
+              <span className="text-twilight-200 group-hover:text-white transition-smooth">
+                {selectedHourglass.promptText}
+              </span>
             </span>
-          </p>
+            <svg className="w-4 h-4 text-twilight-400 group-hover:text-twilight-200 transition-smooth" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </button>
         </div>
       </div>
 
