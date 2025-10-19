@@ -4,7 +4,9 @@
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src --import-alias \"@/*\" --use-npm)",
       "Bash(npm install)",
       "Bash(npm run dev)",
-      "Bash(git add -A)"
+      "Bash(git add -A)",
+      "Bash(winget install stripe.stripe-cli)",
+      "Bash(curl -L https://github.com/stripe/stripe-cli/releases/latest/download/stripe_1.22.0_windows_x86_64.zip -o stripe-cli.zip)"
     ],
     "deny": [],
     "ask": []

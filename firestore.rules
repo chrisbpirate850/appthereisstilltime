@@ -76,6 +76,46 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Stripe customers collection (for Stripe extension)
+    match /customers/{userId} {
+      // Users can read their own customer data
+      allow read: if isOwner(userId);
+
+      // Checkout sessions subcollection
+      match /checkout_sessions/{sessionId} {
+        // Users can create their own checkout sessions
+        allow create: if isOwner(userId);
+        // Users can read their own checkout sessions (to get the URL)
+        allow read: if isOwner(userId);
+      }
+
+      // Subscriptions subcollection (managed by Stripe extension)
+      match /subscriptions/{subscriptionId} {
+        // Users can read their own subscriptions
+        allow read: if isOwner(userId);
+        // Only Stripe extension can write
+        allow write: if false;
+      }
+
+      // Payments subcollection (managed by Stripe extension)
+      match /payments/{paymentId} {
+        // Users can read their own payments
+        allow read: if isOwner(userId);
+        // Only Stripe extension can write
+        allow write: if false;
+      }
+    }
+
+    // Products collection (read-only for all authenticated users)
+    match /products/{productId} {
+      allow read: if request.auth != null;
+
+      // Prices subcollection
+      match /prices/{priceId} {
+        allow read: if request.auth != null;
+      }
+    }
+
     // Default deny all
     match /{document=**} {
       allow read, write: if false;
