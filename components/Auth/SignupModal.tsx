@@ -63,9 +63,13 @@ export function SignupModal({
     setError(null);
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, email, {
+        url: 'https://app.thereisstilltime.com',
+        handleCodeInApp: false,
+      });
       setResetEmailSent(true);
       setError(null);
+      console.log('✅ Password reset email sent to:', email);
     } catch (err: any) {
       console.error('❌ Password reset error:', err);
       if (err.code === 'auth/user-not-found') {
@@ -73,7 +77,7 @@ export function SignupModal({
       } else if (err.code === 'auth/invalid-email') {
         setError('Please enter a valid email address.');
       } else {
-        setError('Failed to send reset email. Please try again.');
+        setError(`Failed to send reset email: ${err.message || 'Please try again.'}`);
       }
     } finally {
       setLoading(false);
@@ -212,8 +216,11 @@ export function SignupModal({
           {/* Reset Email Sent Success Message */}
           {resetEmailSent && (
             <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <p className="text-sm text-green-400">
-                Password reset email sent! Check your inbox.
+              <p className="text-sm text-green-400 mb-2">
+                ✅ Password reset email sent to: <strong>{email}</strong>
+              </p>
+              <p className="text-xs text-green-300">
+                Check your inbox and spam folder. It may take a few minutes to arrive.
               </p>
             </div>
           )}
