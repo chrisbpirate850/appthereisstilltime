@@ -154,9 +154,21 @@ export default function Home() {
     const durationMinutes = timerState.duration / 60;
     const sessionId = `session_${Date.now()}`;
 
-    // Save old stats before recording
-    const oldStats = userStats;
+    // Calculate what the stats WILL BE after this session
+    const currentStats = userStats || { totalSessions: 0, totalHours: 0, currentStreak: 0 };
+    const newTotalSessions = currentStats.totalSessions + 1;
+    const newTotalHours = Math.round(currentStats.totalHours + (durationMinutes / 60));
 
+    // Show completion modal immediately with projected stats
+    setCompletionData({
+      durationMinutes,
+      totalSessions: newTotalSessions,
+      totalHours: newTotalHours,
+      currentStreak: currentStats.currentStreak || 0,
+    });
+    setShowCompletion(true);
+
+    // Record session in background (this will update userStats via the hook)
     await recordSession(
       durationMinutes,
       selectedHourglass.id,
@@ -164,17 +176,6 @@ export default function Home() {
     );
 
     setCompletedSessionId(sessionId);
-
-    // Show completion modal with stats
-    if (userStats) {
-      setCompletionData({
-        durationMinutes,
-        totalSessions: userStats.totalSessions,
-        totalHours: userStats.totalHours,
-        currentStreak: userStats.currentStreak || 0,
-      });
-      setShowCompletion(true);
-    }
 
     // Note: Milestone checking happens in useEffect below when userStats updates
     // Note: Reflection modal will be shown after completion modal is closed
