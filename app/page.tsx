@@ -14,7 +14,7 @@ import { createReflection } from '@/lib/firebase/firestore';
 import { addMilestoneReached } from '@/lib/firebase/firestore';
 import { getUserId } from '@/lib/utils/userId';
 import { useRouter } from 'next/navigation';
-import { hasAnalyticsAccess, hasStudyRoomsAccess } from '@/lib/subscription/tiers';
+import { hasAnalyticsAccess, hasStudyRoomsAccess, getImageCredits } from '@/lib/subscription/tiers';
 
 // Components
 import { SessionPresets } from '@/components/Timer/SessionPresets';
@@ -27,6 +27,7 @@ import { ReflectionModal } from '@/components/Progression/ReflectionModal';
 import { SignupModal } from '@/components/Auth/SignupModal';
 import { TrialBanner } from '@/components/Auth/TrialBanner';
 import { HamburgerMenu } from '@/components/Navigation/HamburgerMenu';
+import { SessionCompletionModal } from '@/components/Sharing/SessionCompletionModal';
 
 export default function Home() {
   const userId = getUserId();
@@ -39,9 +40,16 @@ export default function Home() {
   // UI state management
   const [showHourglassSelector, setShowHourglassSelector] = useState(false);
   const [showCustomHourglass, setShowCustomHourglass] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
   const [showReflection, setShowReflection] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [completionData, setCompletionData] = useState<{
+    durationMinutes: number;
+    totalSessions: number;
+    totalHours: number;
+    currentStreak: number;
+  } | null>(null);
   const [signupReason, setSignupReason] = useState<'trial_expired' | 'trial_limit' | 'feature_locked' | 'voluntary'>('voluntary');
   const [milestoneToast, setMilestoneToast] = useState<{
     message: string;
@@ -49,6 +57,8 @@ export default function Home() {
   const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
   const [subscription, setSubscription] = useState(null);
   const [previousSessionCount, setPreviousSessionCount] = useState<number>(0);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
   // Trial limits hook (now with Firestore sync)
   const {
@@ -62,7 +72,7 @@ export default function Home() {
 
   // Custom hooks
   const { userStats, recordSession, checkNewMilestones } = useSessionTracking();
-  const { availableHourglasses, selectedHourglass, selectHourglass } =
+  const { availableHourglasses, selectedHourglass, selectHourglass, refreshCustomHourglasses } =
     useHourglassLibrary(userStats);
   const { preferences, updateTheme, toggleAnimations } = usePreferences();
 
@@ -155,12 +165,19 @@ export default function Home() {
 
     setCompletedSessionId(sessionId);
 
-    // Note: Milestone checking happens in useEffect below when userStats updates
-
-    // Show reflection modal (if enabled)
-    if (preferences?.enableJournaling && featureFlags.phase4_journaling) {
-      setShowReflection(true);
+    // Show completion modal with stats
+    if (userStats) {
+      setCompletionData({
+        durationMinutes,
+        totalSessions: userStats.totalSessions,
+        totalHours: userStats.totalHours,
+        currentStreak: userStats.currentStreak || 0,
+      });
+      setShowCompletion(true);
     }
+
+    // Note: Milestone checking happens in useEffect below when userStats updates
+    // Note: Reflection modal will be shown after completion modal is closed
   };
 
   const {
@@ -241,15 +258,75 @@ export default function Home() {
     setCompletedSessionId(null);
   };
 
-  const handleCustomHourglassSubmit = async (prompt: string) => {
-    // TODO: Implement API call to generate custom hourglass
-    console.log('Generating custom hourglass:', prompt);
-    setShowCustomHourglass(false);
+  const handleCompletionContinue = () => {
+    setShowCompletion(false);
 
-    // Show loading toast
-    setMilestoneToast({
-      message: 'Generating your custom hourglass... This may take 30-60 seconds.',
-    });
+    // After completion modal, show reflection modal if enabled
+    if (preferences?.enableJournaling && featureFlags.phase4_journaling && completedSessionId) {
+      setShowReflection(true);
+    }
+  };
+
+  const handleCompletionClose = () => {
+    setShowCompletion(false);
+    setCompletionData(null);
+  };
+
+  const handleCustomHourglassSubmit = async (prompt: string, style: string) => {
+    console.log('Generating custom hourglass:', prompt, style);
+    setIsGeneratingImage(true);
+    setGeneratedImageUrl(null);
+
+    try {
+      // Call the Cloud Function to generate the image
+      const response = await fetch('https://us-central1-there-is-still-time.cloudfunctions.net/generateImage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          style,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate image');
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.imageUrl && data.hourglassId) {
+        // Show the generated image
+        setGeneratedImageUrl(data.imageUrl);
+        setIsGeneratingImage(false);
+
+        // Refresh the custom hourglasses list
+        await refreshCustomHourglasses();
+
+        // Auto-select the new custom hourglass
+        const customHourglassId = `custom_${data.hourglassId}`;
+        await selectHourglass(customHourglassId);
+
+        console.log('Generated hourglass:', data);
+      } else {
+        throw new Error(data.error || 'Failed to generate image');
+      }
+    } catch (error: any) {
+      console.error('Error generating hourglass:', error);
+      setIsGeneratingImage(false);
+      setShowCustomHourglass(false);
+      setMilestoneToast({
+        message: '❌ Failed to generate hourglass. Please try again.',
+      });
+    }
+  };
+
+  const handleCloseCustomHourglass = () => {
+    setShowCustomHourglass(false);
+    setIsGeneratingImage(false);
+    setGeneratedImageUrl(null);
   };
 
   // Settings unlocked after first session
@@ -333,21 +410,34 @@ export default function Home() {
       </div>
 
       {/* Modals */}
+      {showCompletion && completionData && (
+        <SessionCompletionModal
+          durationMinutes={completionData.durationMinutes}
+          totalSessions={completionData.totalSessions}
+          totalHours={completionData.totalHours}
+          currentStreak={completionData.currentStreak}
+          onClose={handleCompletionClose}
+          onContinue={handleCompletionContinue}
+        />
+      )}
+
       {showHourglassSelector && (
         <HourglassSelector
           availableHourglasses={availableHourglasses}
           selectedId={selectedHourglass.id}
           onSelect={selectHourglass}
           onClose={() => setShowHourglassSelector(false)}
+          onCreateCustom={() => setShowCustomHourglass(true)}
         />
       )}
 
       {showCustomHourglass && (
         <CustomHourglassModal
           onSubmit={handleCustomHourglassSubmit}
-          onClose={() => setShowCustomHourglass(false)}
-          isGenerating={false}
-          creditsRemaining={isPremium ? 'unlimited' : 0}
+          onClose={handleCloseCustomHourglass}
+          isGenerating={isGeneratingImage}
+          generatedImageUrl={generatedImageUrl || undefined}
+          creditsRemaining={getImageCredits(subscription).unlimited ? 'unlimited' : getImageCredits(subscription).monthly}
         />
       )}
 
