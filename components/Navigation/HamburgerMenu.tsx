@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase/config';
+import { doc, setDoc, getFirestore, Timestamp } from 'firebase/firestore';
 import { UserSubscription } from '@/types';
 import { hasAnalyticsAccess, hasStudyRoomsAccess } from '@/lib/subscription/tiers';
 
@@ -22,6 +23,8 @@ export function HamburgerMenu({
   onSignupClick,
 }: HamburgerMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState('');
   const router = useRouter();
 
   const handleNavigation = (path: string) => {
@@ -33,6 +36,42 @@ export function HamburgerMenu({
     setIsOpen(false);
     await auth.signOut();
     router.push('/');
+  };
+
+  const handleUpgradeToLifetime = async () => {
+    setUpgrading(true);
+    setUpgradeMessage('');
+
+    const db = getFirestore();
+
+    if (!currentUser) {
+      setUpgradeMessage('❌ Not logged in!');
+      setUpgrading(false);
+      return;
+    }
+
+    const subscriptionRef = doc(db, 'subscriptions', currentUser.uid);
+
+    const subscriptionData = {
+      tier: 'lifetime',
+      status: 'active',
+      startDate: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      stripeCustomerId: 'manual_upgrade',
+    };
+
+    try {
+      await setDoc(subscriptionRef, subscriptionData, { merge: true });
+      setUpgradeMessage('✅ Success! Refresh to see changes.');
+      // Reload page after 1.5 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error: any) {
+      setUpgradeMessage(`❌ Error: ${error.message}`);
+    } finally {
+      setUpgrading(false);
+    }
   };
 
   const getTierDisplay = () => {
@@ -187,6 +226,17 @@ export function HamburgerMenu({
                     </button>
                   )}
 
+                  {/* About */}
+                  <button
+                    onClick={() => handleNavigation('/about')}
+                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-twilight-600/30 transition-smooth flex items-center gap-3"
+                  >
+                    <svg className="h-5 w-5 text-twilight-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>About This Timer</span>
+                  </button>
+
                   {/* Pricing & Upgrades */}
                   <button
                     onClick={() => handleNavigation('/pricing')}
@@ -198,7 +248,45 @@ export function HamburgerMenu({
                     <span>Pricing & Upgrades</span>
                   </button>
 
+                  {/* DEV: Upgrade to Lifetime */}
+                  {!isAnonymous && subscription?.tier !== 'lifetime' && (
+                    <>
+                      <button
+                        onClick={handleUpgradeToLifetime}
+                        disabled={upgrading}
+                        className="w-full px-4 py-3 text-left text-sm text-gold-300 hover:bg-gold-900/20 transition-smooth flex items-center gap-3 disabled:opacity-50"
+                      >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        <span>{upgrading ? 'Upgrading...' : 'Upgrade to Lifetime (DEV)'}</span>
+                      </button>
+                      {upgradeMessage && (
+                        <div className={`mx-4 mb-2 p-2 rounded text-xs ${upgradeMessage.startsWith('✅') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                          {upgradeMessage}
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   <div className="my-2 border-t border-twilight-600/30" />
+
+                  {/* About There Is Still Time */}
+                  <a
+                    href="https://thereisstilltime.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full px-4 py-3 text-left text-sm text-twilight-300 hover:bg-twilight-700/20 transition-smooth flex items-center gap-3"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>About There Is Still Time</span>
+                    <svg className="h-4 w-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
 
                   {/* Sign Out */}
                   <button
