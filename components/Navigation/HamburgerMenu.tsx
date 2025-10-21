@@ -227,15 +227,16 @@ export function HamburgerMenu({
                   )}
 
                   {/* About */}
-                  <button
-                    onClick={() => handleNavigation('/about')}
+                  <a
+                    href="/about"
+                    onClick={() => setIsOpen(false)}
                     className="w-full px-4 py-3 text-left text-sm text-white hover:bg-twilight-600/30 transition-smooth flex items-center gap-3"
                   >
                     <svg className="h-5 w-5 text-twilight-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>About This Timer</span>
-                  </button>
+                  </a>
 
                   {/* Pricing & Upgrades */}
                   <button
