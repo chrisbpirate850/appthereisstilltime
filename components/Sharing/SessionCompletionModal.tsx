@@ -45,10 +45,18 @@ export function SessionCompletionModal({
         // Download the shareable image
         await downloadShareableImage();
       } else if (platform === 'twitter') {
-        // Share to Twitter
-        const text = `Just completed a ${durationMinutes}-minute focus session! 🎯\n\n${totalHours}h total focused time · ${totalSessions} sessions\n\nGet locked in and achieve with`;
+        // Download image first, then provide Twitter share instructions
+        await downloadShareableImage();
+
+        // Open Twitter with pre-filled text
+        const text = `Just completed a ${durationMinutes}-minute focus session! 🎯\n\n${Math.floor(totalHours) > 0 ? `${Math.floor(totalHours)}h` : `${Math.round(totalHours * 60)}m`} total focused · ${totalSessions} sessions\n\nGet locked in and achieve with`;
         const url = 'https://app.thereisstilltime.com';
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+
+        // Show helpful message
+        setTimeout(() => {
+          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+          alert('✅ Stats image downloaded!\n\nTwitter will open in a new tab. Click "Add photos" to attach your downloaded stats card.');
+        }, 500);
       } else if (platform === 'instagram') {
         // For Instagram, we'll download the image and show instructions
         await downloadShareableImage();
