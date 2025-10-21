@@ -32,6 +32,7 @@ import { SessionCompletionModal } from '@/components/Sharing/SessionCompletionMo
 export default function Home() {
   const userId = getUserId();
   const router = useRouter();
+  // Test CI/CD deployment
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
