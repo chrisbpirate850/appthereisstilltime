@@ -6,6 +6,7 @@ interface CustomHourglassModalProps {
   onSubmit: (prompt: string, style: string) => void;
   onClose: () => void;
   isGenerating: boolean;
+  generatedImageUrl?: string;
   creditsRemaining: number | 'unlimited';
 }
 
@@ -20,6 +21,7 @@ export function CustomHourglassModal({
   onSubmit,
   onClose,
   isGenerating,
+  generatedImageUrl,
   creditsRemaining,
 }: CustomHourglassModalProps) {
   const [customPrompt, setCustomPrompt] = useState('');
@@ -32,6 +34,111 @@ export function CustomHourglassModal({
   };
 
   const hasCredits = creditsRemaining === 'unlimited' || creditsRemaining > 0;
+
+  // If showing generated result
+  if (generatedImageUrl) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="glass-strong w-full max-w-2xl rounded-3xl p-8 shadow-2xl">
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-light text-white mb-2">
+              ✨ Your Custom Hourglass
+            </h2>
+            <p className="text-sm text-twilight-300">
+              Your custom hourglass has been created and activated!
+            </p>
+          </div>
+
+          {/* Generated Image */}
+          <div className="mb-6 rounded-2xl overflow-hidden bg-twilight-900/50 p-4">
+            <img
+              src={generatedImageUrl}
+              alt="Generated hourglass"
+              className="w-full h-auto rounded-lg"
+            />
+          </div>
+
+          {/* Close Button */}
+          <div className="flex justify-center">
+            <button
+              onClick={onClose}
+              className="rounded-full bg-twilight-600 px-8 py-3 text-sm font-medium text-white transition-smooth hover:bg-twilight-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If generating
+  if (isGenerating) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="glass-strong w-full max-w-lg rounded-3xl p-8 shadow-2xl text-center">
+          {/* Spinning Hourglass Animation */}
+          <div className="mb-6 flex justify-center">
+            <div className="relative">
+              {/* Hourglass SVG with spin animation */}
+              <svg
+                className="w-24 h-24 animate-spin-slow text-twilight-400"
+                style={{ animationDuration: '3s' }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {/* Pulsing glow effect */}
+              <div className="absolute inset-0 rounded-full bg-twilight-400/20 blur-xl animate-pulse" />
+            </div>
+          </div>
+
+          {/* Progress Text */}
+          <h2 className="text-2xl font-light text-white mb-3">
+            Creating Your Hourglass...
+          </h2>
+          <p className="text-twilight-300 mb-2">
+            Our AI is painting your unique vision
+          </p>
+          <p className="text-sm text-twilight-400">
+            This usually takes 10-15 seconds
+          </p>
+
+          {/* Progress Steps */}
+          <div className="mt-8 space-y-3">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-2 h-2 rounded-full bg-twilight-400 animate-pulse" />
+              <span className="text-twilight-300">Analyzing your prompt...</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-2 h-2 rounded-full bg-twilight-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+              <span className="text-twilight-300">Generating artwork...</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-2 h-2 rounded-full bg-twilight-600 animate-pulse" style={{ animationDelay: '1s' }} />
+              <span className="text-twilight-300">Saving to your library...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

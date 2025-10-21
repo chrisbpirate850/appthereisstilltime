@@ -7,6 +7,7 @@ interface HourglassSelectorProps {
   selectedId: string;
   onSelect: (id: string) => void;
   onClose: () => void;
+  onCreateCustom?: () => void;
 }
 
 export function HourglassSelector({
@@ -14,6 +15,7 @@ export function HourglassSelector({
   selectedId,
   onSelect,
   onClose,
+  onCreateCustom,
 }: HourglassSelectorProps) {
   const handleSelect = (id: string) => {
     onSelect(id);
@@ -149,6 +151,39 @@ export function HourglassSelector({
               </div>
             </div>
           ))}
+
+          {/* Create Custom Hourglass with AI */}
+          {onCreateCustom && (
+            <div>
+              <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-twilight-400">
+                AI Custom
+              </h3>
+              <button
+                onClick={() => {
+                  onClose();
+                  onCreateCustom();
+                }}
+                className="glass group relative flex items-center gap-4 rounded-xl p-6 text-left transition-smooth hover:border-twilight-400 hover:bg-twilight-600/20 w-full"
+              >
+                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/30 to-pink-600/30">
+                  <svg className="h-8 w-8 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="mb-1 font-medium text-white">
+                    Create Custom Hourglass with AI
+                  </div>
+                  <div className="text-xs text-twilight-400">
+                    Generate a unique hourglass image using AI based on your description
+                  </div>
+                </div>
+                <svg className="h-6 w-6 text-twilight-400 group-hover:text-twilight-200 transition-smooth" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

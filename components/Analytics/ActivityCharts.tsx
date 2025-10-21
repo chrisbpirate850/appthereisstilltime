@@ -92,18 +92,18 @@ export function ActivityCharts({ dailyStats, weeklyStats, monthlyStats }: Activi
 
   return (
     <div className="glass-strong rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-light text-white flex items-center gap-2">
+      <div className="mb-6">
+        <h3 className="text-xl font-light text-white flex items-center gap-2 mb-4">
           <span className="text-2xl">📊</span>
           Activity Overview
         </h3>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           {/* Chart Type Toggle */}
           <div className="glass rounded-lg p-1 flex">
             <button
               onClick={() => setChartType('bar')}
-              className={`px-3 py-1 rounded text-xs transition-smooth ${
+              className={`px-2 sm:px-3 py-1 rounded text-xs transition-smooth ${
                 chartType === 'bar'
                   ? 'bg-twilight-500 text-white'
                   : 'text-twilight-400 hover:text-white'
@@ -113,7 +113,7 @@ export function ActivityCharts({ dailyStats, weeklyStats, monthlyStats }: Activi
             </button>
             <button
               onClick={() => setChartType('line')}
-              className={`px-3 py-1 rounded text-xs transition-smooth ${
+              className={`px-2 sm:px-3 py-1 rounded text-xs transition-smooth ${
                 chartType === 'line'
                   ? 'bg-twilight-500 text-white'
                   : 'text-twilight-400 hover:text-white'
@@ -127,7 +127,7 @@ export function ActivityCharts({ dailyStats, weeklyStats, monthlyStats }: Activi
           <div className="glass rounded-lg p-1 flex">
             <button
               onClick={() => setTimeRange('week')}
-              className={`px-3 py-1 rounded text-xs transition-smooth ${
+              className={`px-2 sm:px-3 py-1 rounded text-xs transition-smooth ${
                 timeRange === 'week'
                   ? 'bg-twilight-500 text-white'
                   : 'text-twilight-400 hover:text-white'
@@ -137,7 +137,7 @@ export function ActivityCharts({ dailyStats, weeklyStats, monthlyStats }: Activi
             </button>
             <button
               onClick={() => setTimeRange('month')}
-              className={`px-3 py-1 rounded text-xs transition-smooth ${
+              className={`px-2 sm:px-3 py-1 rounded text-xs transition-smooth ${
                 timeRange === 'month'
                   ? 'bg-twilight-500 text-white'
                   : 'text-twilight-400 hover:text-white'
@@ -147,7 +147,7 @@ export function ActivityCharts({ dailyStats, weeklyStats, monthlyStats }: Activi
             </button>
             <button
               onClick={() => setTimeRange('quarter')}
-              className={`px-3 py-1 rounded text-xs transition-smooth ${
+              className={`px-2 sm:px-3 py-1 rounded text-xs transition-smooth ${
                 timeRange === 'quarter'
                   ? 'bg-twilight-500 text-white'
                   : 'text-twilight-400 hover:text-white'

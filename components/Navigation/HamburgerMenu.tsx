@@ -185,6 +185,18 @@ export function HamburgerMenu({
 
             {/* Navigation Items */}
             <div className="py-2">
+              {/* About This Timer - VISIBLE TO ALL USERS */}
+              <a
+                href="/about"
+                onClick={() => setIsOpen(false)}
+                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-twilight-600/30 transition-smooth flex items-center gap-3"
+              >
+                <svg className="h-5 w-5 text-twilight-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>About This Timer</span>
+              </a>
+
               {isAnonymous ? (
                 <button
                   onClick={() => {
@@ -226,18 +238,6 @@ export function HamburgerMenu({
                     </button>
                   )}
 
-                  {/* About */}
-                  <a
-                    href="/about"
-                    onClick={() => setIsOpen(false)}
-                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-twilight-600/30 transition-smooth flex items-center gap-3"
-                  >
-                    <svg className="h-5 w-5 text-twilight-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>About This Timer</span>
-                  </a>
-
                   {/* Pricing & Upgrades */}
                   <button
                     onClick={() => handleNavigation('/pricing')}
@@ -270,25 +270,6 @@ export function HamburgerMenu({
                     </>
                   )}
 
-                  <div className="my-2 border-t border-twilight-600/30" />
-
-                  {/* About There Is Still Time */}
-                  <a
-                    href="https://thereisstilltime.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsOpen(false)}
-                    className="w-full px-4 py-3 text-left text-sm text-twilight-300 hover:bg-twilight-700/20 transition-smooth flex items-center gap-3"
-                  >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>About There Is Still Time</span>
-                    <svg className="h-4 w-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-
                   {/* Sign Out */}
                   <button
                     onClick={handleSignOut}
@@ -301,6 +282,25 @@ export function HamburgerMenu({
                   </button>
                 </>
               )}
+
+              {/* About There Is Still Time - VISIBLE TO ALL USERS */}
+              <div className="my-2 border-t border-twilight-600/30" />
+
+              <a
+                href="https://thereisstilltime.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsOpen(false)}
+                className="w-full px-4 py-3 text-left text-sm text-twilight-300 hover:bg-twilight-700/20 transition-smooth flex items-center gap-3"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>About There Is Still Time</span>
+                <svg className="h-4 w-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             </div>
           </div>
         </>
