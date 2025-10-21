@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     description: 'Beautiful hourglass timer for exam prep and deep work. MCAT, LSAT, Bar Exam students love it. Built by a veteran who understands focus under pressure.',
     images: [
       {
-        url: '/og-image.jpg',
+        url: 'https://app.thereisstilltime.com/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'There Is Still Time - Visual Focus Timer with beautiful hourglass animation',
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     creator: '@chrisbpirate',
     title: 'Get Locked In and Achieve | There Is Still Time',
     description: 'Beautiful visual timer for exam prep students. MCAT, LSAT, Bar Exam. Free forever.',
-    images: ['/og-image.jpg'],
+    images: ['https://app.thereisstilltime.com/og-image.jpg'],
   },
   robots: {
     index: true,
