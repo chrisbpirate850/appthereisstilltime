@@ -109,10 +109,10 @@ export function SessionCompletionModal({
           {/* Celebration message */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
               Session Complete!
             </h2>
-            <p className="text-xl text-twilight-200 italic">
+            <p className="text-lg sm:text-xl text-twilight-100 italic font-light px-4">
               "{quote}"
             </p>
           </div>

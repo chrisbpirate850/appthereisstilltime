@@ -158,7 +158,7 @@ export default function Home() {
     // Calculate what the stats WILL BE after this session
     const currentStats = userStats || { totalSessions: 0, totalHours: 0, currentStreak: 0 };
     const newTotalSessions = currentStats.totalSessions + 1;
-    const newTotalHours = Math.round(currentStats.totalHours + (durationMinutes / 60));
+    const newTotalHours = currentStats.totalHours + (durationMinutes / 60);
 
     // Show completion modal immediately with projected stats
     setCompletionData({

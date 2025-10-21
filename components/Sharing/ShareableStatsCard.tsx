@@ -56,7 +56,7 @@ export function ShareableStatsCard({
           {/* Total Hours */}
           <div className="text-center">
             <div className="text-4xl font-bold text-white mb-1">
-              {totalHours}h
+              {totalHours >= 1 ? `${Math.floor(totalHours)}h` : `${Math.round(totalHours * 60)}m`}
             </div>
             <div className="text-violet-200 text-sm font-medium uppercase tracking-wide">
               Total Focused
