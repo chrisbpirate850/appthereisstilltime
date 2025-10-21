@@ -51,15 +51,16 @@ export default function AboutPage() {
               to destroy your life—it just does.
             </p>
             <p className="text-twilight-100 leading-relaxed">
-              I became an attorney. I married my college sweetheart. We had a daughter—my greatest joy, my reason for
-              everything. I thought I was building a life. But trauma has a way of catching up.
+              When I came home, I promised myself I would overachieve out of gratitude for being alive. I graduated from Penn State. I married my college sweetheart. I graduated from law school. We had a daughter—our greatest achievement, my reason for
+              everything. My wife graduated from medical school 8 years later.
             </p>
           </div>
 
           <div className="glass-strong rounded-3xl p-8 sm:p-12 mb-8">
             <h2 className="text-3xl font-bold text-white mb-6">The Loss</h2>
             <p className="text-twilight-100 leading-relaxed mb-4">
-              Divorce. Then the family courts took my daughter. Not because I was unfit—because the system is broken.
+              A year later, divorce. I was shocked. I tried to rebuild. Four years later, a second divorce. Homelessness in New York City. Rock bottom isn't a place you visit—it's where you learn
+              who you really are. Then slowly the family courts' ignorance of—or ignoring of—the U.S. Constitution destroyed my relationship with my daughter. Not because I was unfit—because the system is broken.
               I fought. I did everything right. It didn't matter.
             </p>
             <p className="text-twilight-100 leading-relaxed mb-4">
@@ -67,24 +68,20 @@ export default function AboutPage() {
               in 6 years. She doesn't know that I think about her every single day. She doesn't know that everything I'm
               building is for her.
             </p>
-            <p className="text-twilight-100 leading-relaxed">
-              A second divorce. Homelessness in New York City. Rock bottom isn't a place you visit—it's where you learn
-              who you really are.
-            </p>
           </div>
 
           <div className="glass-strong rounded-3xl p-8 sm:p-12 mb-8">
             <h2 className="text-3xl font-bold text-white mb-6">The Sailboat</h2>
             <p className="text-twilight-100 leading-relaxed mb-4">
-              For most of the last decade, I lived on a sailboat on the northwest coast of Florida. Boggy Bayou became
+              For most of the last decade, I lived alone on a sailboat on the northwest coast of Florida. Boggy Bayou became
               my monastery. I photographed over 2,000 sunsets from the same sacred space.
             </p>
             <p className="text-twilight-100 leading-relaxed mb-4">
-              In that stillness, I learned the greatest lesson: <strong className="text-white">Life is simple. Love everyone,
-              and start with you.</strong>
+              In that stillness, I learned through living the greatest lesson: <strong className="text-white">Life is simple. Love everyone,
+              and start with yourself.</strong>
             </p>
             <p className="text-twilight-100 leading-relaxed">
-              I discovered three fundamental truths that changed everything:
+              I came to understand three fundamental truths that changed everything:
             </p>
             <ul className="space-y-4 my-6">
               <li className="flex gap-4">
@@ -97,8 +94,8 @@ export default function AboutPage() {
               <li className="flex gap-4">
                 <span className="text-3xl">❤️</span>
                 <div>
-                  <strong className="text-white text-lg">Love is the only question that matters.</strong>
-                  <p className="text-twilight-200 mt-1">If we each decided to love everyone, it would be game over—love wins. Start with you.</p>
+                  <strong className="text-white text-lg">Will you love? is the only question that matters.</strong>
+                  <p className="text-twilight-200 mt-1">If we each decided to love everyone, it would be game over—love wins. Start with yourself.</p>
                 </div>
               </li>
               <li className="flex gap-4">
@@ -150,20 +147,20 @@ export default function AboutPage() {
                   </a>
                 </h3>
                 <p className="text-twilight-200">
-                  3,000 sunsets from Boggy Bayou. Beauty teaches presence. Light teaches hope. Every sunset is proof
+                  Over 2,000 sunsets from Boggy Bayou. Beauty teaches presence. Light teaches hope. Every sunset is proof
                   that endings can be magnificent.
                 </p>
               </div>
 
               <div className="border-l-4 border-violet-500 pl-6">
                 <h3 className="text-xl font-bold text-white mb-2">
-                  <a href="https://thecitizenscompass.com" target="_blank" rel="noopener noreferrer" className="hover:text-violet-300 transition-colors">
-                    Constitutional Education
+                  <a href="https://theartofcitizenship.com" target="_blank" rel="noopener noreferrer" className="hover:text-violet-300 transition-colors">
+                    The Art of Citizenship
                   </a>
                 </h3>
                 <p className="text-twilight-200">
-                  Teaching the principles I wanted my daughter to know. 28 children's books. An AI constitutional
-                  analyzer. Knowledge to protect family and freedom.
+                  An online platform teaching the constitutional principles I wanted my daughter to know, complete with an AI constitutional analyzer. The Citizen's Compass—part memoir, part manual for raising principled kids. Liberty's Principles Pals—a collection of 28 children's books.
+                  All knowledge to protect family and freedom.
                 </p>
               </div>
 
@@ -174,8 +171,7 @@ export default function AboutPage() {
                   </a>
                 </h3>
                 <p className="text-twilight-200">
-                  Federal family court reform. Because 22 million children shouldn't suffer what my daughter suffered.
-                  Because the system needs to change. Because fathers matter.
+                  Reform of state family courts by federal legislation. Because 22 million children shouldn't suffer what my daughter suffered—because state family courts are broken. The system needs to change. Because fathers matter.
                 </p>
               </div>
             </div>
@@ -184,8 +180,8 @@ export default function AboutPage() {
           <div className="glass-strong rounded-3xl p-8 sm:p-12 mb-8">
             <h2 className="text-3xl font-bold text-white mb-6">Why This Timer Exists</h2>
             <p className="text-twilight-100 leading-relaxed mb-4">
-              I know what focus under pressure means. I drove a tank in combat at 19. I fought in courtrooms for my
-              daughter. I studied for the bar exam while my life was falling apart.
+              I know what focus under pressure means. I drove a tank in combat at 19. I took the SAT and LSAT. I studied for the bar exam. I was present for my ex-wife through a post-baccalaureate program, the MCAT, and four years of medical school. I fought in courtrooms for
+              the fundamental right to parent my daughter.
             </p>
             <p className="text-twilight-100 leading-relaxed mb-4">
               This timer is built for students preparing for high-stakes exams—MCAT, LSAT, Bar Exam, USMLE. Because
